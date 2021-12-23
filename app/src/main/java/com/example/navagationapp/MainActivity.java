@@ -53,7 +53,9 @@ public class MainActivity extends AppCompatActivity {
         else if(GoogleApiAvailability.getInstance().isUserResolvableError(available)){
              // error that we can use google dialog to fix
             Dialog dialog = GoogleApiAvailability.getInstance().getErrorDialog(this,available,ERROR_DIALOG_REQUEST);
-            dialog.show();
+            if (dialog != null) {
+                dialog.show();
+            }
         }else{
             Toast.makeText(MainActivity.this, "You can't make map request", Toast.LENGTH_SHORT).show();
         }

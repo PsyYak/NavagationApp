@@ -7,11 +7,57 @@
     android:layout_height="match_parent">
 
     <fragment
+        android:id="@+id/map"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/map"
-        tools:context= ".MapActivity"
-        android:name="com.google.android.gms.maps.SupportMapFragment"/>
+        tools:context=".MapActivity" />
+
+    <RelativeLayout
+        android:background="@drawable/white_border"
+        android:layout_margin="10dp"
+        android:elevation="10dp"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:id="@+id/reLayout1">
+
+        <ImageView
+            android:id="@+id/ic_magnify"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="10dp"
+            android:src="@drawable/ic_magnify"
+            android:contentDescription="search button" />
+
+        <EditText
+            android:layout_marginStart="10dp"
+            android:textColorHint="@color/gray"
+            android:hint="Enter Address"
+            android:id="@+id/input_search"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_centerVertical="true"
+            android:layout_toEndOf="@id/ic_magnify"
+            android:background="@null"
+            android:imeOptions="actionSearch"
+            android:textSize="15sp" />
+    </RelativeLayout>
+
+
+    <ImageView
+        android:src="@drawable/ic_gps"
+        android:layout_below="@id/reLayout1"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_alignParentEnd="true"
+        android:layout_margin="10dp"
+        android:scaleType="centerCrop"
+        android:id="@+id/ic_gps"
+        android:contentDescription="get device location button" />
+
+
+
 
 
 </RelativeLayout>

@@ -2,18 +2,26 @@ package com.example.navagationapp;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.KeyEvent;
+import android.view.View;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -21,8 +29,13 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MapActivity extends AppCompatActivity {
 
@@ -32,6 +45,11 @@ public class MapActivity extends AppCompatActivity {
     private static final float DEFAULT_ZOOM = 15f;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1234;
 
+    // widgets
+    private EditText mSearchText;
+    private ImageView mGps;
+
+    // vars
     private boolean mLocationPermissionsGranted = false;
     private GoogleMap mMap;
     private FusedLocationProviderClient mFusedLocationProviderClient;
@@ -40,8 +58,12 @@ public class MapActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
+        mSearchText = findViewById(R.id.input_search);
+        mGps = findViewById(R.id.ic_gps);
+
         // check permission
         getLocationPermission();
+
     }
 
     private void getDeviceLocation() {
@@ -57,7 +79,9 @@ public class MapActivity extends AppCompatActivity {
                         if (task.isSuccessful()) {
                             Log.d(TAG, "onComplete: found location");
                             Location currentLocation = (Location) task.getResult();
-                            moveCamera(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()), DEFAULT_ZOOM);
+
+                            moveCamera(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()), DEFAULT_ZOOM, "My Location");
+
                         } else {
                             Log.d(TAG, "onComplete: current location null");
                             Toast.makeText(MapActivity.this, "Could not get location", Toast.LENGTH_SHORT).show();
@@ -65,20 +89,75 @@ public class MapActivity extends AppCompatActivity {
                     }
                 });
             }
-        } catch (SecurityException e) {
+        }catch (SecurityException e) {
             Log.d(TAG, "getDeviceLocation: error: " + e.getMessage());
-
-
+        }catch(NullPointerException e){
+            Log.d(TAG, "getDeviceLocation: null error: "+e.getMessage());
         }
 
 
     }
 
-    private void moveCamera(LatLng latLng, float zoom) {
+    private void moveCamera(LatLng latLng, float zoom,String title) {
 
         Log.d(TAG, "moveCamera: moving camera to Latitude:" + latLng.latitude + ",Longitude:" + latLng.longitude);
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoom));
 
+        if(!title.equals("My Location")) {
+            MarkerOptions options = new MarkerOptions()
+                    .position(latLng)
+                    .title(title);
+            mMap.addMarker(options);
+        }
+        hideKeyboard(MapActivity.this);
+    }
+
+    private void init(){
+        Log.d(TAG, "init: initializing");
+        mSearchText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView textView, int actionId, KeyEvent keyEvent) {
+                if(actionId == EditorInfo.IME_ACTION_SEARCH
+                   || actionId == EditorInfo.IME_ACTION_DONE
+                   || keyEvent.getAction() == KeyEvent.ACTION_DOWN
+                   || keyEvent.getAction() == KeyEvent.KEYCODE_ENTER){
+
+                    // execute search
+                    geoLocate();
+                    hideKeyboard(MapActivity.this);
+                }
+                return false;
+            }
+        });
+        mGps.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Log.d(TAG, "onClick: clicked gps icon");
+                getDeviceLocation();
+            }
+        });
+        hideKeyboard(MapActivity.this);
+    }
+
+    private void geoLocate() {
+        Log.d(TAG, "geoLocate: getlocating");
+        String searchString = mSearchText.getText().toString();
+
+        Geocoder geocoder = new Geocoder(MapActivity.this);
+        List<Address> list = new ArrayList<>();
+
+        try {
+                list = geocoder.getFromLocationName(searchString,1);
+        }catch(IOException e){
+            Log.d(TAG, "geoLocate: IOException: "+e.getMessage());
+        }
+
+        if(list.size()>0){
+            Address address = list.get(0);
+            Log.d(TAG, "geoLocate: Address is: "+address.toString());
+            // calling moveCamera to move the camera to that location
+            moveCamera(new LatLng(address.getLatitude(),address.getLongitude()),DEFAULT_ZOOM,address.getAddressLine(0));
+        }
 
     }
 
@@ -101,6 +180,8 @@ public class MapActivity extends AppCompatActivity {
                     }
                     mMap.setMyLocationEnabled(true); // Add blue dot on map to show current location
                     mMap.getUiSettings().setMyLocationButtonEnabled(false); // disable the API auto location button
+
+                    init();
 
                 }
             }
@@ -151,5 +232,17 @@ public class MapActivity extends AppCompatActivity {
             }
 
         }
+    }
+
+    // Method to hide the keyboard on activity start and after search
+    private void hideKeyboard(Activity activity) {
+        InputMethodManager imm = (InputMethodManager) activity.getSystemService(Activity.INPUT_METHOD_SERVICE);
+        //Find the currently focused view, so we can grab the correct window token from it.
+        View view = activity.getCurrentFocus();
+        //If no view currently has focus, create a new one, just so we can grab a window token from it
+        if (view == null) {
+            view = new View(activity);
+        }
+        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
     }
 }
