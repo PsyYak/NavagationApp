@@ -253,6 +253,7 @@ public class MainActivity extends AppCompatActivity {
         return null;
     }
 
+    // take file from intent, save it as temp file in the app dir
     @Nullable
     public static String createCopyAndReturnRealPath(@NonNull Context context, @NonNull Uri uri,String fileName) {
         final ContentResolver contentResolver = context.getContentResolver();
@@ -279,6 +280,7 @@ public class MainActivity extends AppCompatActivity {
         return file.getAbsolutePath();
     }
 
+    // handle xls file type
     private void xlsFilePrint(FileInputStream fileInputStream) throws IOException {
         workbook = new HSSFWorkbook(fileInputStream);
         sheet = workbook.getSheetAt(0);
@@ -304,6 +306,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // handle xlsx file type
     private void xlsxFilePrint(FileInputStream fileInputStream) throws IOException {
 
         XSSFWorkbook myWorkBook = new XSSFWorkbook(fileInputStream);
