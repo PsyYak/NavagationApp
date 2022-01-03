@@ -2,6 +2,7 @@ package com.example.navagationapp;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.Dialog;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -16,12 +17,17 @@ import android.util.Log;
 import android.widget.Button;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.example.navagationapp.Utils.FileUtil;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 
@@ -36,6 +42,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -95,30 +102,7 @@ public class MainActivity extends AppCompatActivity {
                     READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED){
                 if(ContextCompat.checkSelfPermission(MainActivity.this.getApplicationContext(),
                         MANAGE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
-                    // open file picker
-
-                    Intent chooseFile = new Intent(Intent.ACTION_GET_CONTENT);
-                    // Define file types to xls and xlsx
-                    String[] mimeTypes = {"application/vnd.ms-excel","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"};
-                    // Ask specifically for something that can be opened:
-                    chooseFile.addCategory(Intent.CATEGORY_OPENABLE);
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                        chooseFile.setType(mimeTypes.length == 1 ? mimeTypes[0] : "*/*");
-                        if (mimeTypes.length > 0) {
-                            chooseFile.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
-                        }
-                    } else {
-                        String mimeTypesStr = "";
-                        for (String mimeType : mimeTypes) {
-                            mimeTypesStr += mimeType + "|";
-                        }
-                        chooseFile.setType(mimeTypesStr.substring(0,mimeTypesStr.length() - 1));
-                    }
-
-                    startActivityForResult(
-                            Intent.createChooser(chooseFile, "Choose a file"),
-                            PICKFILE_RESULT_CODE
-                    );
+                        pickFileToUpload();
                 }else{
                     ActivityCompat.requestPermissions(MainActivity.this,permission,STORAGE_PERMISSION_REQUEST_CODE);
                 }
@@ -130,28 +114,7 @@ public class MainActivity extends AppCompatActivity {
             String [] permission = {Manifest.permission.READ_EXTERNAL_STORAGE};
             if(ContextCompat.checkSelfPermission(MainActivity.this.getApplicationContext(),
                     READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
-                // open file picker
-                Intent chooseFile = new Intent(Intent.ACTION_GET_CONTENT);
-                // Define file types to xls and xlsx
-                String[] mimeTypes = {"application/vnd.ms-excel","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"};
-               // Ask specifically for something that can be opened:
-                chooseFile.addCategory(Intent.CATEGORY_OPENABLE);
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                    chooseFile.setType(mimeTypes.length == 1 ? mimeTypes[0] : "*/*");
-                    if (mimeTypes.length > 0) {
-                        chooseFile.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
-                    }
-                } else {
-                    String mimeTypesStr = "";
-                    for (String mimeType : mimeTypes) {
-                        mimeTypesStr += mimeType + "|";
-                    }
-                    chooseFile.setType(mimeTypesStr.substring(0,mimeTypesStr.length() - 1));
-                }
-                startActivityForResult(
-                        Intent.createChooser(chooseFile, "Choose a file"),
-                        PICKFILE_RESULT_CODE
-                );
+                    pickFileToUpload();
             }else{
                 ActivityCompat.requestPermissions(this,permission,STORAGE_PERMISSION_REQUEST_CODE);
             }
@@ -182,103 +145,76 @@ public class MainActivity extends AppCompatActivity {
         return false;
 
     }
-    @SuppressLint("Range")
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent result)  {
 
-        if(resultCode == RESULT_OK) {
-            if (requestCode == PICKFILE_RESULT_CODE ) {
-                if (result != null){
-                 //   Log.d(TAG, "onActivityResult: Proceed to get data from result");
-                    Uri uri = result.getData();
-                    String fileExtension = getFileExt(getApplicationContext(),uri);
-                  //  Log.d(TAG, "onActivityResult: fileExtension:"+fileExtension);
-                    String realFileName = createCopyAndReturnRealPath(getApplicationContext(),uri,"test");
-                    File myFile = new File(Objects.requireNonNull(realFileName));
-                   // Log.d(TAG, "onActivityResult: realFileName path is: "+realFileName);
-                try {
-                 //   Log.d(TAG, "onActivityResult: myFile.getName() is:"+myFile.getName());
-                    File file = new File(getFilesDir(),myFile.getName());
-                    FileInputStream fileInputStream =  new FileInputStream(file);
-                    if (fileExtension != null) {
-                        if(fileExtension.contains("xls")){
-                            Log.d(TAG, "onActivityResult: Got xls.");
-                            xlsFilePrint(fileInputStream);
-                        }else if(fileExtension.contains("xlsx")){
-                            Log.d(TAG, "onActivityResult: Got xlsx.");
-                            xlsxFilePrint(fileInputStream);
+    private void pickFileToUpload(){
+
+        Intent pickFile = new Intent(Intent.ACTION_GET_CONTENT);
+        String[] mimeTypes = {"application/vnd.ms-excel","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"};
+        pickFile.addCategory(Intent.CATEGORY_OPENABLE);
+        pickFile.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
+        StringBuilder mimeTypesStr = new StringBuilder();
+        for (String mimeType : mimeTypes) {
+            mimeTypesStr.append(mimeType).append("|");
+        }
+        pickFile.setType(mimeTypesStr.substring(0,mimeTypesStr.length() - 1));
+
+        pickFileActivity.launch(pickFile);
+
+
+
+    }
+    ActivityResultLauncher<Intent> pickFileActivity = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            new ActivityResultCallback<ActivityResult>() {
+                @Override
+                public void onActivityResult(ActivityResult result) {
+                    if (result.getResultCode() == Activity.RESULT_OK) {
+
+                        Intent data = result.getData();
+                        if (data != null) {
+                            // convert intent data to uri data
+                            Uri uri = data.getData();
+                            // getting the file extension
+                            String fileExtension = FileUtil.getFileExt(getApplicationContext(),uri);
+                            // creating temp file with the file name "test" in app dir
+                            String realFileName = FileUtil.createCopyAndReturnRealPath(getApplicationContext(),uri,"test");
+                            // assign that file to myFile
+                            File myFile = new File(Objects.requireNonNull(realFileName));
+
+                            // getting the file we created above
+                            File pickedFile = new File(getFilesDir(),myFile.getName());
+                            FileInputStream fileInputStream = null;
+                            try {
+                                fileInputStream = new FileInputStream(pickedFile);
+                                // checking file extension
+                                if (fileExtension != null) {
+                                    if(fileExtension.contains("xls")){
+                                        Log.d(TAG, "onActivityResult: Got xls.");
+                                        xlsFilePrint(fileInputStream);
+                                    }else if(fileExtension.contains("xlsx")){
+                                        Log.d(TAG, "onActivityResult: Got xlsx.");
+                                        xlsxFilePrint(fileInputStream);
+                                    }else{
+                                        Log.d(TAG, "onActivityResult: Not supported file type, notify user.");
+                                        Toast.makeText(MainActivity.this,"File extension is not supported, please use either Xlsx or Xls.",Toast.LENGTH_LONG)
+                                                .show();
+                                    }
+                                }
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+
+
                         }else{
-                            Log.d(TAG, "onActivityResult: Not supported file type, notify user.");
-                            Toast.makeText(MainActivity.this,"File extension is not supported, please use either Xlsx or Xls.",Toast.LENGTH_LONG)
+                            Toast.makeText(MainActivity.this,"Couldn't upload file, try again.",Toast.LENGTH_LONG)
                                     .show();
+
                         }
+
                     }
-
-                } catch (IOException e) {
-                    e.printStackTrace();
                 }
+            });
 
-                }else{
-                    Log.d(TAG, "onActivityResult: fail picking/upload error.");
-                    Toast.makeText(MainActivity.this,"Error on picking file, try again later.",Toast.LENGTH_SHORT)
-                            .show();
-                }
-            }
-        }else{
-            Log.d(TAG, "onActivityResult: result code error: "+resultCode);
-        }
-
-
-        super.onActivityResult(requestCode, resultCode, result);
-    }
-
-    @SuppressLint("Range")
-    private String getFileExt(Context context,Uri uri) {
-        String uriString = uri.toString();
-        File myFile = new File(uriString);
-        String path = myFile.getAbsolutePath();
-        String displayName = null;
-
-        if (uriString.startsWith("content://")) {
-            try (Cursor cursor = context.getContentResolver().query(uri, null, null, null, null)) {
-                if (cursor != null && cursor.moveToFirst()) {
-                    displayName = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
-                    return displayName;
-                }
-            }
-        } else if (uriString.startsWith("file://")) {
-            displayName = myFile.getName();
-            return displayName;
-        }
-        return null;
-    }
-
-    // take file from intent, save it as temp file in the app dir
-    @Nullable
-    public static String createCopyAndReturnRealPath(@NonNull Context context, @NonNull Uri uri,String fileName) {
-        final ContentResolver contentResolver = context.getContentResolver();
-        if (contentResolver == null)
-            return null;
-
-        // Create file path inside app's data dir
-        String filePath = context.getApplicationInfo().dataDir + File.separator +"files"+File.separator+fileName;
-        File file = new File(filePath);
-        try {
-            InputStream inputStream = contentResolver.openInputStream(uri);
-            if (inputStream == null)
-                return null;
-            OutputStream outputStream = new FileOutputStream(file);
-            byte[] buf = new byte[1024];
-            int len;
-            while ((len = inputStream.read(buf)) > 0)
-                outputStream.write(buf, 0, len);
-            outputStream.close();
-            inputStream.close();
-        } catch (IOException ignore) {
-            return null;
-        }
-        return file.getAbsolutePath();
-    }
 
     // handle xls file type
     private void xlsFilePrint(FileInputStream fileInputStream) throws IOException {
