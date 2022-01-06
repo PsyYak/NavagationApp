@@ -115,8 +115,10 @@ public class MapActivity extends AppCompatActivity {
     private void init(){
         Log.d(TAG, "init: initializing");
         mSearchText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+
             @Override
             public boolean onEditorAction(TextView textView, int actionId, KeyEvent keyEvent) {
+
                 if(actionId == EditorInfo.IME_ACTION_SEARCH
                    || actionId == EditorInfo.IME_ACTION_DONE
                    || keyEvent.getAction() == KeyEvent.ACTION_DOWN
@@ -125,6 +127,8 @@ public class MapActivity extends AppCompatActivity {
                     // execute search
                     geoLocate();
                     hideKeyboard(MapActivity.this);
+                    mSearchText.getText().clear();
+
                 }
                 return false;
             }

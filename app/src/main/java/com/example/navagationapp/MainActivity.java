@@ -4,15 +4,10 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
-import android.content.ContentResolver;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.provider.OpenableColumns;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.Toast;
@@ -21,8 +16,6 @@ import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -31,22 +24,20 @@ import com.example.navagationapp.Utils.FileUtil;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 
-
-import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.hssf.usermodel.HSSFDateUtil;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellValue;
+import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.text.SimpleDateFormat;
 import java.util.Iterator;
 import java.util.Objects;
 
@@ -54,19 +45,19 @@ import java.util.Objects;
 public class MainActivity extends AppCompatActivity {
 
     private static final String READ_EXTERNAL_STORAGE = Manifest.permission.READ_EXTERNAL_STORAGE;
-    private static final String MANAGE_EXTERNAL_STORAGE = Manifest.permission.MANAGE_EXTERNAL_STORAGE;
+    private static final String WRITE_EXTERNAL_STORAGE = Manifest.permission.WRITE_EXTERNAL_STORAGE;
 
 
     // file vars
     private static Cell cell;
     private static Sheet sheet;
-    private Workbook workbook = new HSSFWorkbook();
+
 
     // global vars
     private static final String TAG = "MainActivity";
     private static final int ERROR_DIALOG_REQUEST = 9001;
     private static final int STORAGE_PERMISSION_REQUEST_CODE = 1234;
-    private static final int PICKFILE_RESULT_CODE = 4444;
+
 
 
     @Override
@@ -101,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
             if(ContextCompat.checkSelfPermission(MainActivity.this.getApplicationContext(),
                     READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED){
                 if(ContextCompat.checkSelfPermission(MainActivity.this.getApplicationContext(),
-                        MANAGE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+                        WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
                         pickFileToUpload();
                 }else{
                     ActivityCompat.requestPermissions(MainActivity.this,permission,STORAGE_PERMISSION_REQUEST_CODE);
@@ -217,30 +208,111 @@ public class MainActivity extends AppCompatActivity {
 
 
     // handle xls file type
-    private void xlsFilePrint(FileInputStream fileInputStream) throws IOException {
-        workbook = new HSSFWorkbook(fileInputStream);
-        sheet = workbook.getSheetAt(0);
-        for (Row row : sheet) {
-            Iterator<Cell> cellIterator = row.cellIterator();
-            while (cellIterator.hasNext()) {
-                Cell cell = cellIterator.next();
-                // Check cell type and format accordingly
-                switch (cell.getCellType()) {
-                    case Cell.CELL_TYPE_NUMERIC:
-                        // Print cell value
-                        System.out.println(cell.getNumericCellValue());
-                        break;
+    private void xlsFilePrint(FileInputStream fileInputStream){
+        try {
+            Workbook workbook = new HSSFWorkbook(fileInputStream);
+            sheet = workbook.getSheetAt(0);
+            int rowsCount = sheet.getPhysicalNumberOfRows();
+            FormulaEvaluator formulaEvaluator = workbook.getCreationHelper().createFormulaEvaluator();
+            StringBuilder sb = new StringBuilder();
 
-                    case Cell.CELL_TYPE_STRING:
-                        System.out.println(cell.getStringCellValue());
-                        break;
+            // outer loop, loops through rows
+            for (int r = 0; r < rowsCount; r++) {
+
+                Row row = sheet.getRow(r);
+                int cellCount = row.getPhysicalNumberOfCells();
+                // inner loop, loops through columns
+                for (int c = 0; c < cellCount; c++) {
+
+                    String value = getCellAsString(row,c,formulaEvaluator);
+                    String cellInfo = "r:"+r+"; c:"+c+"; value:"+value;
+                    Log.d(TAG, "xlsFilePrint: Data from row: "+cellInfo);
+                    sb.append(value).append(",");
+
+
                 }
-                System.out.println("\t");
+                sb.append(";");
+            }
+            Log.d(TAG, "xlsFilePrint: StringBuilder data: "+ sb.toString());
 
+            parseStringBuilder(sb);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    private void parseStringBuilder(StringBuilder mStringBuilder) {
+        Log.d(TAG, "parseStringBuilder: Started parsing");
+
+        String[] rows = mStringBuilder.toString().split(";");
+        for(int i=0;i<rows.length;i++){
+            String[] columns = rows[i].split(",");
+
+            try{
+                String value1 = columns[0];
+                String value2 = columns[1];
+                String value3 = columns[2];
+                String value4 = columns[3];
+                String value5 = columns[4];
+                String value6 = columns[5];
+
+
+
+                String cellInfo = "value1:"+value1+",value2:"+value2+"value3:"+value3+",value4:"+value4+"value5:"+value5+",value6:"+value6;
+                Log.d(TAG, "parseStringBuilder: cellInfo: "+cellInfo);
+
+            }catch (NullPointerException e){
+                Log.d(TAG, "parseStringBuilder: NPE : "+e.getMessage());
             }
 
         }
+
+
+
     }
+
+    private String getCellAsString(Row row, int c, FormulaEvaluator formulaEvaluator) {
+        Log.d(TAG, "getCellAsString: getting cell value");
+        String value="";
+
+        try {
+            Cell cell = row.getCell(c);
+            CellValue cellValue = formulaEvaluator.evaluate(cell);
+            switch (cellValue.getCellType()){
+
+                case Cell.CELL_TYPE_BOOLEAN:
+                    value=""+cellValue.getBooleanValue();
+                    break;
+
+                case Cell.CELL_TYPE_NUMERIC:
+                    double numericValue = cellValue.getNumberValue();
+                    if(HSSFDateUtil.isCellDateFormatted(cell)){
+                        double date = cellValue.getNumberValue();
+                        @SuppressLint("SimpleDateFormat")
+                        SimpleDateFormat formatter = new SimpleDateFormat(getString(R.string.dateFormat));
+                        value = formatter.format(HSSFDateUtil.getJavaDate(date));
+                    }else{
+                        value=""+numericValue;
+                    }
+                    break;
+
+                case Cell.CELL_TYPE_STRING:
+                    value = ""+cellValue.getStringValue();
+                    break;
+
+                default:
+
+            }
+        }catch (NullPointerException e){
+            Log.d(TAG, "getCellAsString: NPE: "+e.getMessage());
+        }
+
+
+    return value;
+    }
+
 
     // handle xlsx file type
     private void xlsxFilePrint(FileInputStream fileInputStream) throws IOException {
@@ -255,11 +327,11 @@ public class MainActivity extends AppCompatActivity {
                 switch (cell.getCellType()) {
                     case Cell.CELL_TYPE_NUMERIC:
                         // Print cell value
-                        System.out.println(cell.getNumericCellValue());
+                      //  System.out.println(cell.getNumericCellValue());
                         break;
 
                     case Cell.CELL_TYPE_STRING:
-                        System.out.println(cell.getStringCellValue());
+                       // System.out.println(cell.getStringCellValue());
                         break;
                 }
                 System.out.println("\t");

@@ -31,16 +31,18 @@
             android:contentDescription="search button" />
 
         <EditText
-            android:layout_marginStart="10dp"
-            android:textColorHint="@color/gray"
-            android:hint="Enter Address"
+            android:maxLines="1"
             android:id="@+id/input_search"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_centerVertical="true"
+            android:layout_marginStart="10dp"
             android:layout_toEndOf="@id/ic_magnify"
-            android:background="@null"
+
+            android:hint="Enter Address"
             android:imeOptions="actionSearch"
+            android:textColor="@color/black"
+            android:textColorHint="@color/gray"
             android:textSize="15sp" />
     </RelativeLayout>
 

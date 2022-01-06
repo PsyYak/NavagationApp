@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">NavigationApp</string>
+    <string name="dateFormat">dd/MM/yy</string>
 
 </resources>

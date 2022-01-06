@@ -4,45 +4,18 @@ import com.google.android.gms.maps.model.LatLng;
 
 public class Location {
 
-    private String title;
-    private String phoneNumber;
-    private String address;
     private LatLng lat;
+    private String latitude;
+    private String longitude;
 
     // empty constructor
-    public Location(){
+    public Location(){}
 
-    }
 
-    public Location(String title, String phoneNumber, String address, LatLng lat) {
-        this.title = title;
-        this.phoneNumber = phoneNumber;
-        this.address = address;
+    public Location(LatLng lat, String latitude, String longitude) {
         this.lat = lat;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getPhoneNumber() {
-        return phoneNumber;
-    }
-
-    public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
+        this.latitude = latitude;
+        this.longitude = longitude;
     }
 
     public LatLng getLat() {
@@ -53,13 +26,19 @@ public class Location {
         this.lat = lat;
     }
 
-    @Override
-    public String toString() {
-        return "Location{" +
-                "title='" + title + '\'' +
-                ", phoneNumber='" + phoneNumber + '\'' +
-                ", address='" + address + '\'' +
-                ", lat=" + lat +
-                '}';
+    public String getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(String latitude) {
+        this.latitude = latitude;
+    }
+
+    public String getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(String longitude) {
+        this.longitude = longitude;
     }
 }
