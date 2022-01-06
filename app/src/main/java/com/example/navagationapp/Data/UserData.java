@@ -1,6 +1,6 @@
 package com.example.navagationapp.Data;
 
-public class UserData extends Donor{
+public class UserData{
 
     private int userID;
     private String userName;

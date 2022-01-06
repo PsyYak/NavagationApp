@@ -4,10 +4,12 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.Toast;
@@ -21,6 +23,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.example.navagationapp.Utils.FileUtil;
+import com.example.navagationapp.Utils.LoadingBar;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 
@@ -44,6 +47,10 @@ import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
 
+    // global vars
+    private static final String TAG = "MainActivity";
+    private static final int ERROR_DIALOG_REQUEST = 9001;
+    private static final int STORAGE_PERMISSION_REQUEST_CODE = 1234;
     private static final String READ_EXTERNAL_STORAGE = Manifest.permission.READ_EXTERNAL_STORAGE;
     private static final String WRITE_EXTERNAL_STORAGE = Manifest.permission.WRITE_EXTERNAL_STORAGE;
 
@@ -52,11 +59,9 @@ public class MainActivity extends AppCompatActivity {
     private static Cell cell;
     private static Sheet sheet;
 
-
-    // global vars
-    private static final String TAG = "MainActivity";
-    private static final int ERROR_DIALOG_REQUEST = 9001;
-    private static final int STORAGE_PERMISSION_REQUEST_CODE = 1234;
+    // vars
+    LoadingBar loadingBar;
+    private Handler handler = new Handler();
 
 
 
@@ -71,6 +76,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void init(){
+
         Button btnMap = findViewById(R.id.btnMap);
         btnMap.setOnClickListener(view -> {
             Intent intent = new Intent(MainActivity.this,MapActivity.class);
@@ -163,6 +169,10 @@ public class MainActivity extends AppCompatActivity {
 
                         Intent data = result.getData();
                         if (data != null) {
+                            // show the user a dialog of progress in new thread
+                            loadingBar = new LoadingBar(MainActivity.this);
+                            loadingBar.showDialog();
+
                             // convert intent data to uri data
                             Uri uri = data.getData();
                             // getting the file extension
@@ -186,12 +196,14 @@ public class MainActivity extends AppCompatActivity {
                                         Log.d(TAG, "onActivityResult: Got xlsx.");
                                         xlsxFilePrint(fileInputStream);
                                     }else{
+                                        loadingBar.dismissDialog();
                                         Log.d(TAG, "onActivityResult: Not supported file type, notify user.");
                                         Toast.makeText(MainActivity.this,"File extension is not supported, please use either Xlsx or Xls.",Toast.LENGTH_LONG)
                                                 .show();
                                     }
                                 }
                             } catch (IOException e) {
+                                loadingBar.dismissDialog();
                                 e.printStackTrace();
                             }
 
@@ -234,10 +246,10 @@ public class MainActivity extends AppCompatActivity {
                 sb.append(";");
             }
             Log.d(TAG, "xlsFilePrint: StringBuilder data: "+ sb.toString());
-
             parseStringBuilder(sb);
 
         } catch (IOException e) {
+            loadingBar.dismissDialog();
             e.printStackTrace();
         }
 
@@ -262,8 +274,16 @@ public class MainActivity extends AppCompatActivity {
 
                 String cellInfo = "value1:"+value1+",value2:"+value2+"value3:"+value3+",value4:"+value4+"value5:"+value5+",value6:"+value6;
                 Log.d(TAG, "parseStringBuilder: cellInfo: "+cellInfo);
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        loadingBar.dismissDialog();
+                        Log.d(TAG, "run: File parsed successfully");
+                    }
+                },2000);
 
             }catch (NullPointerException e){
+                //loadingBar.dismissDialog();
                 Log.d(TAG, "parseStringBuilder: NPE : "+e.getMessage());
             }
 
@@ -276,10 +296,10 @@ public class MainActivity extends AppCompatActivity {
     private String getCellAsString(Row row, int c, FormulaEvaluator formulaEvaluator) {
         Log.d(TAG, "getCellAsString: getting cell value");
         String value="";
-
+        CellValue cellValue = null;
         try {
             Cell cell = row.getCell(c);
-            CellValue cellValue = formulaEvaluator.evaluate(cell);
+             cellValue = formulaEvaluator.evaluate(cell);
             switch (cellValue.getCellType()){
 
                 case Cell.CELL_TYPE_BOOLEAN:
@@ -306,6 +326,7 @@ public class MainActivity extends AppCompatActivity {
 
             }
         }catch (NullPointerException e){
+            //loadingBar.dismissDialog();
             Log.d(TAG, "getCellAsString: NPE: "+e.getMessage());
         }
 
