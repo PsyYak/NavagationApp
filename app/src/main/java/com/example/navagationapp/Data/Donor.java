@@ -1,17 +1,17 @@
 package com.example.navagationapp.Data;
 
-public class Donor extends Donation{
+public class Donor extends Location{
 
     private String contactName;
     private String businessTitle;
     private String phoneNumber;
     private String address;
-    private int donationID;
+    private String donationID;
 
     public Donor(){}
 
 
-    public Donor(String contactName, String businessTitle, String phoneNumber, String address, int donationID) {
+    public Donor(String contactName, String businessTitle, String phoneNumber, String address, String donationID) {
         this.contactName = contactName;
         this.businessTitle = businessTitle;
         this.phoneNumber = phoneNumber;
@@ -51,12 +51,11 @@ public class Donor extends Donation{
         this.address = address;
     }
 
-    public int getDonationID() {
+    public String getDonationID() {
         return donationID;
     }
 
-    public void setDonationID(int donationID) {
+    public void setDonationID(String donationID) {
         this.donationID = donationID;
     }
-
 }

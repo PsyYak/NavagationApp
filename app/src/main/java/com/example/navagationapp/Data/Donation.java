@@ -2,18 +2,18 @@ package com.example.navagationapp.Data;
 
 import java.util.Date;
 
-public class Donation extends Location{
+public class Donation extends Donor{
 
     private float donationAmount;
     private String receiptNumber;
     private String comments;
     private Date dateCompleted;
     private boolean isCompleted;
-    private int donationID;
+    private String donationID;
 
     public Donation(){}
 
-    public Donation(float donationAmount, String receiptNumber, String comments, Date dateCompleted, boolean isCompleted,int donationID) {
+    public Donation(float donationAmount, String receiptNumber, String comments, Date dateCompleted, boolean isCompleted,String donationID) {
         this.donationAmount = donationAmount;
         this.receiptNumber = receiptNumber;
         this.comments = comments;
@@ -62,11 +62,14 @@ public class Donation extends Location{
         isCompleted = completed;
     }
 
-    public int getDonationID() {
+
+    @Override
+    public String getDonationID() {
         return donationID;
     }
 
-    public void setDonationID(int donationID) {
+    @Override
+    public void setDonationID(String donationID) {
         this.donationID = donationID;
     }
 }

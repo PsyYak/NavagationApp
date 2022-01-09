@@ -22,12 +22,17 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.example.navagationapp.Data.Donation;
+import com.example.navagationapp.Data.Donor;
+import com.example.navagationapp.Utils.Common;
 import com.example.navagationapp.Utils.FileUtil;
 import com.example.navagationapp.Utils.LoadingBar;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 
+import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFDateUtil;
+import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellValue;
@@ -40,8 +45,12 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 
@@ -62,6 +71,8 @@ public class MainActivity extends AppCompatActivity {
     // vars
     LoadingBar loadingBar;
     private Handler handler = new Handler();
+    private final Map<String, Integer> columnNames = new HashMap<String, Integer>();
+    private List<Donation> donationList;
 
 
 
@@ -224,6 +235,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             Workbook workbook = new HSSFWorkbook(fileInputStream);
             sheet = workbook.getSheetAt(0);
+            getColumnNames(sheet);
             int rowsCount = sheet.getPhysicalNumberOfRows();
             FormulaEvaluator formulaEvaluator = workbook.getCreationHelper().createFormulaEvaluator();
             StringBuilder sb = new StringBuilder();
@@ -233,12 +245,13 @@ public class MainActivity extends AppCompatActivity {
 
                 Row row = sheet.getRow(r);
                 int cellCount = row.getPhysicalNumberOfCells();
+
                 // inner loop, loops through columns
                 for (int c = 0; c < cellCount; c++) {
 
                     String value = getCellAsString(row,c,formulaEvaluator);
                     String cellInfo = "r:"+r+"; c:"+c+"; value:"+value;
-                    Log.d(TAG, "xlsFilePrint: Data from row: "+cellInfo);
+                    //Log.d(TAG, "xlsFilePrint: Data from row: "+cellInfo);
                     sb.append(value).append(",");
 
 
@@ -255,9 +268,23 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    private void getColumnNames(Sheet sheet) {
+        //Create map
+        HSSFRow row = (HSSFRow) sheet.getRow(0); //Get first row
+        //following is boilerplate from the java doc
+        short minColIx = row.getFirstCellNum(); //get the first column index for a row
+        short maxColIx = row.getLastCellNum(); //get the last column index for a row
+        for (short colIx = minColIx; colIx < maxColIx; colIx++) { //loop from first to last index
+            HSSFCell cell = row.getCell(colIx); //get the cell
+
+            Log.d(TAG, "getColumnNames: "+sheet.getRow(0).getCell(colIx).getStringCellValue());
+            columnNames.put(cell.getStringCellValue(), cell.getColumnIndex());//add the cell contents (name of column) and cell index to the map
+            Log.d(TAG, "xlsFilePrint: cell value is:" + cell.getStringCellValue() + " and index is:" + cell.getColumnIndex());
+        }
+    }
+
     private void parseStringBuilder(StringBuilder mStringBuilder) {
         Log.d(TAG, "parseStringBuilder: Started parsing");
-
         String[] rows = mStringBuilder.toString().split(";");
         for(int i=0;i<rows.length;i++){
             String[] columns = rows[i].split(",");
@@ -269,18 +296,11 @@ public class MainActivity extends AppCompatActivity {
                 String value4 = columns[3];
                 String value5 = columns[4];
                 String value6 = columns[5];
+                Donation donation = new Donation();
 
 
+                // Log.d(TAG, "parseStringBuilder: cellInfo: "+cellInfo);
 
-                String cellInfo = "value1:"+value1+",value2:"+value2+"value3:"+value3+",value4:"+value4+"value5:"+value5+",value6:"+value6;
-                Log.d(TAG, "parseStringBuilder: cellInfo: "+cellInfo);
-                handler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        loadingBar.dismissDialog();
-                        Log.d(TAG, "run: File parsed successfully");
-                    }
-                },2000);
 
             }catch (NullPointerException e){
                 //loadingBar.dismissDialog();
@@ -288,13 +308,20 @@ public class MainActivity extends AppCompatActivity {
             }
 
         }
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                loadingBar.dismissDialog();
+                Log.d(TAG, "run: File parsed successfully");
+            }
+        },2000);
 
 
 
     }
 
     private String getCellAsString(Row row, int c, FormulaEvaluator formulaEvaluator) {
-        Log.d(TAG, "getCellAsString: getting cell value");
+        //Log.d(TAG, "getCellAsString: getting cell value");
         String value="";
         CellValue cellValue = null;
         try {
