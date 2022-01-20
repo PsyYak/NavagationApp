@@ -1,14 +1,12 @@
 package com.example.navagationapp.Utils;
 
-import com.google.android.gms.maps.model.LatLng;
-
 public class Common {
 
-    public static String contactName = "איש קשר";
-    public static  String businessTitle = "שם עסק";
-    public static  String phoneNumber = "טלפון";
-    public static  String address = "כתובת";
-    public static  String comments = "הערות";
+    public static final String contactName = "איש קשר";
+    public static final String businessTitle = "שם עסק";
+    public static final String phoneNumber = "טלפון";
+    public static final String address = "כתובת";
+    public static final String comments = "הערות";
 
 
 

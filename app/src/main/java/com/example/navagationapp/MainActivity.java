@@ -72,6 +72,7 @@ public class MainActivity extends AppCompatActivity {
     LoadingBar loadingBar;
     private Handler handler = new Handler();
     private final Map<String, Integer> columnNames = new HashMap<String, Integer>();
+    private String[] colName;
     private List<Donation> donationList;
 
 
@@ -274,39 +275,57 @@ public class MainActivity extends AppCompatActivity {
         //following is boilerplate from the java doc
         short minColIx = row.getFirstCellNum(); //get the first column index for a row
         short maxColIx = row.getLastCellNum(); //get the last column index for a row
+        colName = new String[maxColIx];
         for (short colIx = minColIx; colIx < maxColIx; colIx++) { //loop from first to last index
             HSSFCell cell = row.getCell(colIx); //get the cell
 
             Log.d(TAG, "getColumnNames: "+sheet.getRow(0).getCell(colIx).getStringCellValue());
             columnNames.put(cell.getStringCellValue(), cell.getColumnIndex());//add the cell contents (name of column) and cell index to the map
-            Log.d(TAG, "xlsFilePrint: cell value is:" + cell.getStringCellValue() + " and index is:" + cell.getColumnIndex());
+            colName[colIx] = cell.getStringCellValue();
+           Log.d(TAG, "xlsFilePrint: cell value is:" + cell.getStringCellValue() + " and index is:" + cell.getColumnIndex());
+           // Log.d(TAG, "getColumnNames: colName["+colIx+"] is "+colName[colIx]);
         }
     }
 
     private void parseStringBuilder(StringBuilder mStringBuilder) {
         Log.d(TAG, "parseStringBuilder: Started parsing");
         String[] rows = mStringBuilder.toString().split(";");
-        for(int i=0;i<rows.length;i++){
-            String[] columns = rows[i].split(",");
-
+        int index=0;
+        while (index<rows.length) {
+            String[] columns = rows[index].split(",");
             try{
+                /*
                 String value1 = columns[0];
                 String value2 = columns[1];
                 String value3 = columns[2];
                 String value4 = columns[3];
                 String value5 = columns[4];
                 String value6 = columns[5];
+                */
                 Donation donation = new Donation();
+                for(int j=0;j<colName.length;j++){
+                    String stringName = colName[j];
+                    if(stringName.equals(Common.address)){
+                        donation.setAddress(columns[j]);
+                    }if(stringName.equals(Common.contactName)){
+                        donation.setContactName(columns[j]);
+                    }if(stringName.equals(Common.businessTitle)){
+                        donation.setBusinessTitle(columns[j]);
+                    }if(stringName.equals(Common.phoneNumber)){
+                        donation.setPhoneNumber(columns[j]);
+                    }if(stringName.equals(Common.comments)){
+                        donation.setComments(columns[j]);
+                    }
+                }
 
-
-                // Log.d(TAG, "parseStringBuilder: cellInfo: "+cellInfo);
-
+                Log.d(TAG, "parseStringBuilder: Donation holds: "+donation.toString());
 
             }catch (NullPointerException e){
                 //loadingBar.dismissDialog();
                 Log.d(TAG, "parseStringBuilder: NPE : "+e.getMessage());
             }
 
+            index++;
         }
         handler.postDelayed(new Runnable() {
             @Override
