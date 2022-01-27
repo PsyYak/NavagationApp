@@ -305,16 +305,22 @@ public class MainActivity extends AppCompatActivity {
                 Donation donation = new Donation();
                 for(int j=0;j<colName.length;j++){
                     String stringName = colName[j];
-                    if(stringName.equals(Common.address)){
-                        donation.setAddress(columns[j]);
-                    }if(stringName.equals(Common.contactName)){
-                        donation.setContactName(columns[j]);
-                    }if(stringName.equals(Common.businessTitle)){
-                        donation.setBusinessTitle(columns[j]);
-                    }if(stringName.equals(Common.phoneNumber)){
-                        donation.setPhoneNumber(columns[j]);
-                    }if(stringName.equals(Common.comments)){
-                        donation.setComments(columns[j]);
+                    switch (stringName) {
+                        case Common.address:
+                            donation.setAddress(columns[j]);
+                            break;
+                        case Common.contactName:
+                            donation.setContactName(columns[j]);
+                            break;
+                        case Common.businessTitle:
+                            donation.setBusinessTitle(columns[j]);
+                            break;
+                        case Common.phoneNumber:
+                            donation.setPhoneNumber(columns[j]);
+                            break;
+                        case Common.comments:
+                            donation.setComments(columns[j]);
+                            break;
                     }
                 }
 
