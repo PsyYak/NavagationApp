@@ -74,6 +74,7 @@ public class MainActivity extends AppCompatActivity {
     private final Map<String, Integer> columnNames = new HashMap<String, Integer>();
     private String[] colName;
     private List<Donation> donationList;
+    private Donation donation;
 
 
 
@@ -294,15 +295,7 @@ public class MainActivity extends AppCompatActivity {
         while (index<rows.length) {
             String[] columns = rows[index].split(",");
             try{
-                /*
-                String value1 = columns[0];
-                String value2 = columns[1];
-                String value3 = columns[2];
-                String value4 = columns[3];
-                String value5 = columns[4];
-                String value6 = columns[5];
-                */
-                Donation donation = new Donation();
+                donation = new Donation();
                 for(int j=0;j<colName.length;j++){
                     String stringName = colName[j];
                     switch (stringName) {
@@ -330,16 +323,32 @@ public class MainActivity extends AppCompatActivity {
                 //loadingBar.dismissDialog();
                 Log.d(TAG, "parseStringBuilder: NPE : "+e.getMessage());
             }
-
+            donationList.add(donation);
             index++;
         }
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                loadingBar.dismissDialog();
-                Log.d(TAG, "run: File parsed successfully");
-            }
-        },2000);
+       if(donationList.isEmpty()){
+           // donation list is empty, toast user
+           handler.postDelayed(new Runnable() {
+               @Override
+               public void run() {
+                   loadingBar.dismissDialog();
+                   Log.d(TAG, "run: File parsed successfully but is empty");
+                   Toast.makeText(MainActivity.this, "File must contain specific columns, make sure they are there and upload again", Toast.LENGTH_SHORT).show();
+               }
+           },2000);
+
+
+       }else{
+           // got donation in list, can move to next stage
+           handler.postDelayed(new Runnable() {
+               @Override
+               public void run() {
+                   loadingBar.dismissDialog();
+                   Log.d(TAG, "run: File parsed successfully");
+               }
+           },2000);
+       }
+
 
 
 

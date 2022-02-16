@@ -128,6 +128,7 @@ public class MapActivity extends AppCompatActivity {
                     geoLocate();
                     hideKeyboard(MapActivity.this);
                     mSearchText.getText().clear();
+                    mSearchText.requestFocus();
 
                 }
                 return false;
