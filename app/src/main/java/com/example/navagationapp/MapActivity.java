@@ -1,5 +1,7 @@
 package com.example.navagationapp;
 
+import static com.example.navagationapp.BuildConfig.google_map_API_key;
+
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -13,15 +15,20 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.EditText;
+import android.widget.AutoCompleteTextView;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+
+import com.example.navagationapp.Adapter.PlaceAutoCompleteAdapter;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -29,30 +36,42 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.libraries.places.api.Places;
+import com.google.android.libraries.places.api.model.AutocompleteSessionToken;
+import com.google.android.libraries.places.api.net.PlacesClient;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
-public class MapActivity extends AppCompatActivity {
+public class MapActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener{
 
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+
+    }
     private static final String TAG = "MapActivity";
     private static final String FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION;
     private static final String COARSE_LOCATION = Manifest.permission.ACCESS_COARSE_LOCATION;
     private static final float DEFAULT_ZOOM = 15f;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1234;
+    private static final LatLngBounds LAT_LNG_BOUNDS = new LatLngBounds(new LatLng(-40,-168),new LatLng(71,136));
 
     // widgets
-    private EditText mSearchText;
+    private AutoCompleteTextView mSearchText;
     private ImageView mGps;
 
     // vars
     private boolean mLocationPermissionsGranted = false;
     private GoogleMap mMap;
     private FusedLocationProviderClient mFusedLocationProviderClient;
+    private PlaceAutoCompleteAdapter mPlaceAutoCompleteAdapter;
+    private GoogleApiClient mGoogleApiClient;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -61,8 +80,12 @@ public class MapActivity extends AppCompatActivity {
         mSearchText = findViewById(R.id.input_search);
         mGps = findViewById(R.id.ic_gps);
 
-        // check permission
+        // check permission on activity start
         getLocationPermission();
+        if (!Places.isInitialized()) {
+            Locale locale = new Locale("he");
+            Places.initialize(getApplicationContext(), google_map_API_key, locale);
+        }
 
     }
 
@@ -72,6 +95,7 @@ public class MapActivity extends AppCompatActivity {
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(MapActivity.this);
         try {
             if (mLocationPermissionsGranted) {
+                @SuppressLint("MissingPermission")
                 Task location = mFusedLocationProviderClient.getLastLocation();
                 location.addOnCompleteListener(new OnCompleteListener() {
                     @Override
@@ -114,6 +138,16 @@ public class MapActivity extends AppCompatActivity {
 
     private void init(){
         Log.d(TAG, "init: initializing");
+
+        AutocompleteSessionToken autocompleteSessionToken;
+        autocompleteSessionToken=AutocompleteSessionToken.newInstance();
+        PlacesClient placesClient;
+        placesClient=Places.createClient(this);
+        PlaceAutoCompleteAdapter mAdapter;
+        mAdapter = new PlaceAutoCompleteAdapter(this, placesClient,autocompleteSessionToken);
+
+        mSearchText.setAdapter(mAdapter);
+
         mSearchText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
 
             @Override
@@ -124,7 +158,7 @@ public class MapActivity extends AppCompatActivity {
                    || keyEvent.getAction() == KeyEvent.ACTION_DOWN
                    || keyEvent.getAction() == KeyEvent.KEYCODE_ENTER){
 
-                    // execute search
+                    // execute search geoLocate method
                     geoLocate();
                     hideKeyboard(MapActivity.this);
                     mSearchText.getText().clear();
@@ -145,7 +179,7 @@ public class MapActivity extends AppCompatActivity {
     }
 
     private void geoLocate() {
-        Log.d(TAG, "geoLocate: getlocating");
+        Log.d(TAG, "geoLocate: get locating");
         String searchString = mSearchText.getText().toString();
 
         Geocoder geocoder = new Geocoder(MapActivity.this);
@@ -171,6 +205,7 @@ public class MapActivity extends AppCompatActivity {
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         assert mapFragment != null;
         mapFragment.getMapAsync(new OnMapReadyCallback() {
+            @SuppressLint("MissingPermission")
             @Override
             public void onMapReady(@NonNull GoogleMap googleMap) {
                 Toast.makeText(MapActivity.this, "Map Ready", Toast.LENGTH_SHORT).show();
@@ -250,4 +285,5 @@ public class MapActivity extends AppCompatActivity {
         }
         imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
     }
+
 }

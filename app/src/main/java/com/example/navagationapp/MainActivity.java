@@ -4,7 +4,6 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
-import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -23,7 +22,6 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.example.navagationapp.Data.Donation;
-import com.example.navagationapp.Data.Donor;
 import com.example.navagationapp.Utils.Common;
 import com.example.navagationapp.Utils.FileUtil;
 import com.example.navagationapp.Utils.LoadingBar;
@@ -45,7 +43,6 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -92,7 +89,7 @@ public class MainActivity extends AppCompatActivity {
 
         Button btnMap = findViewById(R.id.btnMap);
         btnMap.setOnClickListener(view -> {
-            Intent intent = new Intent(MainActivity.this,MapActivity.class);
+            Intent intent = new Intent(MainActivity.this, MapActivity.class);
             startActivity(intent);
         });
 
@@ -203,10 +200,10 @@ public class MainActivity extends AppCompatActivity {
                                 // checking file extension
                                 if (fileExtension != null) {
                                     if(fileExtension.contains("xls")){
-                                        Log.d(TAG, "onActivityResult: Got xls.");
+                                       // Log.d(TAG, "onActivityResult: Got xls.");
                                         xlsFilePrint(fileInputStream);
                                     }else if(fileExtension.contains("xlsx")){
-                                        Log.d(TAG, "onActivityResult: Got xlsx.");
+                                       // Log.d(TAG, "onActivityResult: Got xlsx.");
                                         xlsxFilePrint(fileInputStream);
                                     }else{
                                         loadingBar.dismissDialog();
