@@ -148,6 +148,7 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.On
 
         mSearchText.setAdapter(mAdapter);
 
+
         mSearchText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
 
             @Override
