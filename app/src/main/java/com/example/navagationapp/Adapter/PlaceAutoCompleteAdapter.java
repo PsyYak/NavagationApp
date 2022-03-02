@@ -67,7 +67,9 @@ public class PlaceAutoCompleteAdapter extends ArrayAdapter<AutocompletePredictio
         AutocompletePrediction item = getItem(position);
 
         TextView textView1 = (TextView) row.findViewById(android.R.id.text1);
-        textView1.setText(item.getPrimaryText(STYLE_BOLD));
+        String streetCityText = String.valueOf(item.getPrimaryText(STYLE_BOLD)+","+item.getSecondaryText(STYLE_BOLD));
+       // Log.d(TAG, "getView: city? : "+streetCityText);
+        textView1.setText(streetCityText);
         return row;
     }
 
@@ -134,7 +136,6 @@ public class PlaceAutoCompleteAdapter extends ArrayAdapter<AutocompletePredictio
         // Use the builder to create a FindAutocompletePredictionsRequest.
         FindAutocompletePredictionsRequest request = FindAutocompletePredictionsRequest.builder()
                 .setTypeFilter(TypeFilter.ADDRESS)
-                .setTypeFilter(TypeFilter.CITIES)
                 .setSessionToken(token)
                 .setQuery(constraint.toString())
                 .build();
@@ -145,7 +146,7 @@ public class PlaceAutoCompleteAdapter extends ArrayAdapter<AutocompletePredictio
                 for (AutocompletePrediction prediction : response.getAutocompletePredictions()) {
 
                     Log.i(TAG, "Result is: "+prediction.getPrimaryText(null).toString());
-                    Log.i(TAG, "onSuccess: city is: "+prediction.getPlaceId());
+                   // Log.i(TAG, "onSuccess: city is: "+prediction.getPlaceId());
                 }
 
                 tempResult=response.getAutocompletePredictions();
