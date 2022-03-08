@@ -69,6 +69,7 @@ public class PlaceAutoCompleteAdapter extends ArrayAdapter<AutocompletePredictio
         TextView textView1 = row.findViewById(android.R.id.text1);
         // to show both city and street address
         String streetCityText = item.getPrimaryText(STYLE_BOLD)+","+item.getSecondaryText(STYLE_BOLD);
+
         textView1.setText(streetCityText);
         return row;
     }
@@ -138,6 +139,7 @@ public class PlaceAutoCompleteAdapter extends ArrayAdapter<AutocompletePredictio
                 .setTypeFilter(TypeFilter.ADDRESS)
                 .setSessionToken(token)
                 .setQuery(constraint.toString())
+                .setCountry("IL")
                 .build();
 
         placesClient.findAutocompletePredictions(request).addOnSuccessListener(new OnSuccessListener<FindAutocompletePredictionsResponse>() {

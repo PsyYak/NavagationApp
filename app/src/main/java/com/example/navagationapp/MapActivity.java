@@ -5,10 +5,13 @@ import static com.example.navagationapp.BuildConfig.google_map_API_key;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Address;
+import android.location.Criteria;
 import android.location.Geocoder;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -43,6 +46,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.android.libraries.places.api.Places;
 import com.google.android.libraries.places.api.model.AutocompleteSessionToken;
 import com.google.android.libraries.places.api.net.PlacesClient;
+
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -141,6 +145,7 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.On
 
         AutocompleteSessionToken autocompleteSessionToken;
         autocompleteSessionToken=AutocompleteSessionToken.newInstance();
+
         PlacesClient placesClient;
         placesClient=Places.createClient(this);
         PlaceAutoCompleteAdapter mAdapter;
