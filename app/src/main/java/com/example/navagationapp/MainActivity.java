@@ -9,6 +9,7 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Parcelable;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.Toast;
@@ -194,7 +195,7 @@ public class MainActivity extends AppCompatActivity {
 
                             // getting the file we created above
                             File pickedFile = new File(getFilesDir(),myFile.getName());
-                            FileInputStream fileInputStream = null;
+                            FileInputStream fileInputStream;
                             try {
                                 fileInputStream = new FileInputStream(pickedFile);
                                 // checking file extension
@@ -249,7 +250,7 @@ public class MainActivity extends AppCompatActivity {
                 for (int c = 0; c < cellCount; c++) {
 
                     String value = getCellAsString(row,c,formulaEvaluator);
-                    String cellInfo = "r:"+r+"; c:"+c+"; value:"+value;
+                    //String cellInfo = "r:"+r+"; c:"+c+"; value:"+value;
                     //Log.d(TAG, "xlsFilePrint: Data from row: "+cellInfo);
                     sb.append(value).append(",");
 
@@ -257,7 +258,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 sb.append(";");
             }
-            Log.d(TAG, "xlsFilePrint: StringBuilder data: "+ sb.toString());
+            Log.d(TAG, "xlsFilePrint: StringBuilder data: "+ sb);
             parseStringBuilder(sb);
 
         } catch (IOException e) {
@@ -341,6 +342,10 @@ public class MainActivity extends AppCompatActivity {
                @Override
                public void run() {
                    loadingBar.dismissDialog();
+                   Intent moveToMap = new Intent(MainActivity.this,MapActivity.class);
+                   moveToMap.putExtra("donationList", (Parcelable) donationList);
+                   startActivity(moveToMap);
+
                    Log.d(TAG, "run: File parsed successfully");
                }
            },2000);
@@ -354,7 +359,7 @@ public class MainActivity extends AppCompatActivity {
     private String getCellAsString(Row row, int c, FormulaEvaluator formulaEvaluator) {
         //Log.d(TAG, "getCellAsString: getting cell value");
         String value="";
-        CellValue cellValue = null;
+        CellValue cellValue;
         try {
             Cell cell = row.getCell(c);
              cellValue = formulaEvaluator.evaluate(cell);

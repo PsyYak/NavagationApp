@@ -37,7 +37,7 @@
             android:layout_centerVertical="true"
             android:layout_marginStart="10dp"
             android:layout_toEndOf="@id/ic_magnify"
-            android:hint="Enter Address"
+            android:hint="Enter an Address"
             android:imeOptions="actionSearch"
             android:maxLines="1"
             android:textColor="@color/black"

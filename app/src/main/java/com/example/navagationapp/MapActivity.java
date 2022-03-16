@@ -75,7 +75,7 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.On
     private GoogleMap mMap;
     private FusedLocationProviderClient mFusedLocationProviderClient;
     private PlaceAutoCompleteAdapter mPlaceAutoCompleteAdapter;
-    private GoogleApiClient mGoogleApiClient;
+
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -148,10 +148,9 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.On
 
         PlacesClient placesClient;
         placesClient=Places.createClient(this);
-        PlaceAutoCompleteAdapter mAdapter;
-        mAdapter = new PlaceAutoCompleteAdapter(this, placesClient,autocompleteSessionToken);
+        mPlaceAutoCompleteAdapter = new PlaceAutoCompleteAdapter(this, placesClient,autocompleteSessionToken);
 
-        mSearchText.setAdapter(mAdapter);
+        mSearchText.setAdapter(mPlaceAutoCompleteAdapter);
 
 
         mSearchText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
