@@ -16,8 +16,11 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.Adapter;
+import android.widget.AdapterView;
 import android.widget.AutoCompleteTextView;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -31,7 +34,9 @@ import androidx.core.content.ContextCompat;
 
 import com.example.navagationapp.Adapter.PlaceAutoCompleteAdapter;
 import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -44,12 +49,16 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.libraries.places.api.Places;
+import com.google.android.libraries.places.api.model.AutocompletePrediction;
 import com.google.android.libraries.places.api.model.AutocompleteSessionToken;
+import com.google.android.libraries.places.api.model.Place;
+import com.google.android.libraries.places.api.net.FetchPlaceRequest;
 import com.google.android.libraries.places.api.net.PlacesClient;
 
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
@@ -71,6 +80,8 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.On
     private ImageView mGps;
 
     // vars
+    private Place mPlace;
+    private PlacesClient placesClient;
     private boolean mLocationPermissionsGranted = false;
     private GoogleMap mMap;
     private FusedLocationProviderClient mFusedLocationProviderClient;
@@ -137,7 +148,8 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.On
                     .title(title);
             mMap.addMarker(options);
         }
-        hideKeyboard(MapActivity.this);
+        hideKeyBoard();
+       //hideKeyboard(MapActivity.this);
     }
 
     private void init(){
@@ -146,13 +158,13 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.On
         AutocompleteSessionToken autocompleteSessionToken;
         autocompleteSessionToken=AutocompleteSessionToken.newInstance();
 
-        PlacesClient placesClient;
+
         placesClient=Places.createClient(this);
         mPlaceAutoCompleteAdapter = new PlaceAutoCompleteAdapter(this, placesClient,autocompleteSessionToken);
 
+        mSearchText.setOnItemClickListener(mAutocompleteClickListener);
+
         mSearchText.setAdapter(mPlaceAutoCompleteAdapter);
-
-
         mSearchText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
 
             @Override
@@ -165,7 +177,8 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.On
 
                     // execute search geoLocate method
                     geoLocate();
-                    hideKeyboard(MapActivity.this);
+                    hideKeyBoard();
+                    //hideKeyboard(MapActivity.this);
                     mSearchText.getText().clear();
                     mSearchText.requestFocus();
 
@@ -180,7 +193,8 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.On
                 getDeviceLocation();
             }
         });
-        hideKeyboard(MapActivity.this);
+        hideKeyBoard();
+        //hideKeyboard(MapActivity.this);
     }
 
     private void geoLocate() {
@@ -289,6 +303,58 @@ public class MapActivity extends AppCompatActivity implements GoogleApiClient.On
             view = new View(activity);
         }
         imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+    }
+
+    private void hideKeyBoard(){
+        this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+    }
+
+    /*
+     ---------------------------------    Google Places API autocomplete suggestion logic     --------------------------------------------
+     */
+
+    private AdapterView.OnItemClickListener mAutocompleteClickListener =  new AdapterView.OnItemClickListener() {
+        @Override
+        public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+            hideKeyBoard();
+
+            // get the item that was clicked
+            final AutocompletePrediction item = mPlaceAutoCompleteAdapter.getItem(i);
+            // get the place id from that item
+            final String placeId = item.getPlaceId();
+            Log.d(TAG, "mAutocompleteClickListener onclick: "+placeId);
+
+            // construct the array of fields we want from that place
+            List<Place.Field> placeFields = Arrays.asList(
+                    Place.Field.ADDRESS,
+                    Place.Field.ID,
+                    Place.Field.PHONE_NUMBER,
+                    Place.Field.LAT_LNG);
+            // build the request to get the data we want based on the placeId
+            FetchPlaceRequest request = FetchPlaceRequest.builder(placeId, placeFields)
+                    .build();
+            placesClient.fetchPlace(request).addOnSuccessListener((response) -> {
+                Place place = response.getPlace();
+                Log.d(TAG, "fetchPlace: Address: "+place.getAddress()+", ID:"+place.getId()+", Phone:"+place.getPhoneNumber()+", LAT_LNG: "+place.getLatLng());
+            }).addOnFailureListener((exception) -> {
+                if (exception instanceof ApiException) {
+                    ApiException apiException = (ApiException) exception;
+                    int statusCode = apiException.getStatusCode();
+                    // Handle error with given status code.
+                    Log.e(TAG, "Place not found: " + exception.getMessage());
+                }
+            });
+
+        }
+    };
+
+    private void fetchPlace(FetchPlaceRequest request){
+
+        // Add a listener to handle the response.
+
+
+
+
     }
 
 }
