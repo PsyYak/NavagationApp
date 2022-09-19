@@ -250,11 +250,7 @@ public class MainActivity extends AppCompatActivity {
                 for (int c = 0; c < cellCount; c++) {
 
                     String value = getCellAsString(row,c,formulaEvaluator);
-                    //String cellInfo = "r:"+r+"; c:"+c+"; value:"+value;
-                    //Log.d(TAG, "xlsFilePrint: Data from row: "+cellInfo);
                     sb.append(value).append(",");
-
-
                 }
                 sb.append(";");
             }
@@ -324,6 +320,7 @@ public class MainActivity extends AppCompatActivity {
             donationList.add(donation);
             index++;
         }
+        Log.d(TAG, "parseStringBuilder: donationList size:"+donationList.size());
        if(donationList.isEmpty()){
            // donation list is empty, toast user
            handler.postDelayed(new Runnable() {
@@ -334,10 +331,8 @@ public class MainActivity extends AppCompatActivity {
                    Toast.makeText(MainActivity.this, "File must contain specific columns, make sure they are there and upload again", Toast.LENGTH_SHORT).show();
                }
            },2000);
-
-
        }else{
-           // got donation in list, can move to next stage
+           // got at least one donation in list, can move to next stage
            handler.postDelayed(new Runnable() {
                @Override
                public void run() {
@@ -346,7 +341,7 @@ public class MainActivity extends AppCompatActivity {
                    moveToMap.putExtra("donationList", (Parcelable) donationList);
                    startActivity(moveToMap);
 
-                   Log.d(TAG, "run: File parsed successfully");
+                   Log.d(TAG, "run: File parsed successfully!");
                }
            },2000);
        }
